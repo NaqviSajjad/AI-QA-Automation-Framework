@@ -1,0 +1,72 @@
+# ---------------------------------------------------------------------------
+# Framework configuration. Environment variables always win over these values
+# (see src/utils/config.py). Keep secrets out of this file.
+# ---------------------------------------------------------------------------
+
+app:
+  base_url: "http://127.0.0.1:8000"
+  api_base_url: "http://127.0.0.1:8000/api"
+  auto_start: true          # test session boots the demo app itself
+  startup_timeout_s: 30
+
+auth:
+  email: "customer@example.com"
+  password: "Passw0rd!"
+
+playwright:
+  headless: true
+  browser: "chromium"       # chromium | firefox | webkit
+  viewport:
+    width: 1280
+    height: 900
+  default_timeout_ms: 10000
+  navigation_timeout_ms: 15000
+  slow_mo_ms: 0
+  video: "retain-on-failure"
+  screenshot: "only-on-failure"
+  trace: "retain-on-failure"
+
+llm:
+  provider: "mock"          # mock | openai
+  model: "gpt-4o-mini"
+  temperature: 0.0
+  max_tokens: 600
+  timeout_s: 30
+  max_retries: 2
+
+rag:
+  knowledge_base_dir: "knowledge-base"
+  chunk_size: 700
+  chunk_overlap: 120
+  top_k: 4
+  min_similarity: 0.05
+  relative_floor: 0.45      # drop hits scoring below 45% of the best hit
+  embedding_backend: "deterministic"   # deterministic | openai
+  embedding_model: "text-embedding-3-small"
+  embedding_dim: 1536
+
+agent:
+  max_retries: 2
+  max_tool_calls: 3
+  max_llm_calls: 5
+  escalation_priorities: ["high", "critical"]
+  allowed_tools:
+    - get_billing_history
+    - get_account_status
+    - get_subscription
+    - get_payment_status
+    - get_refund_policy
+    - create_support_ticket
+
+prompts:
+  active_version: "customer_support_v2"
+  directory: "prompts"
+
+observability:
+  langfuse_enabled: false
+  service_name: "ai-qa-automation-framework"
+
+paths:
+  test_data: "test-data"
+  reports: "reports"
+  baselines: "data/baselines"

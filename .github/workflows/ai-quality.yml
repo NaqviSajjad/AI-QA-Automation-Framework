@@ -1,0 +1,202 @@
+name: AI Quality
+
+# Two pipelines, on purpose:
+#
+#   pull_request - fast, free, fully deterministic. Runs in mock mode with the
+#                  built-in evaluators, so it needs no credentials and gives the
+#                  same answer every time. This is the gate that blocks a merge.
+#
+#   nightly      - the expensive half: cross-browser Playwright, the full LLM /
+#                  RAG / agent evaluation, prompt regression and security. Model
+#                  -based metrics cost money and move between runs, which makes
+#                  them a poor blocker and a good early-warning system.
+
+on:
+  pull_request:
+    branches: [main]
+  push:
+    branches: [main]
+  schedule:
+    - cron: "0 2 * * *"
+  workflow_dispatch:
+    inputs:
+      full_evaluation:
+        description: "Run the full nightly evaluation"
+        type: boolean
+        default: false
+
+env:
+  PYTHON_VERSION: "3.11"
+  LLM_PROVIDER: mock
+  EVALUATOR_BACKEND: builtin
+  LANGFUSE_ENABLED: "false"
+  APP_AUTO_START: "true"
+  HEADLESS: "true"
+
+jobs:
+  # ------------------------------------------------------------------ #
+  lint:
+    name: Lint and type check
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+          cache: pip
+      - name: Install
+        run: |
+          python -m pip install --upgrade pip
+          pip install -e ".[dev]"
+      - name: Ruff
+        run: ruff check .
+      - name: MyPy
+        run: mypy src api pages fixtures
+
+  # ------------------------------------------------------------------ #
+  pull-request-gate:
+    name: PR quality gate (mock mode)
+    runs-on: ubuntu-latest
+    if: github.event_name == 'pull_request' || github.event_name == 'push'
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+          cache: pip
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -e ".[ai]"
+
+      - name: Install Playwright Chromium
+        run: python -m playwright install --with-deps chromium
+
+      - name: Unit and contract tests
+        run: pytest tests/agents tests/api -m "not slow" --junitxml=reports/junit-unit.xml
+
+      - name: Playwright smoke
+        run: pytest tests/ui tests/e2e -m "smoke" --junitxml=reports/junit-smoke.xml
+
+      - name: Deterministic AI tests
+        run: pytest tests/rag tests/security -m "not slow" --junitxml=reports/junit-ai.xml
+
+      - name: AI quality smoke evaluation
+        run: pytest tests/ai -m "not slow" --junitxml=reports/junit-eval.xml
+
+      - name: Prompt regression
+        run: pytest tests/prompts --junitxml=reports/junit-prompt.xml
+
+      - name: Evaluate dataset
+        run: python -m scripts.run_evaluation
+
+      - name: AI quality gate
+        run: python -m scripts.quality_gate --from-file reports/evaluation_run.json
+
+      - name: Render report
+        if: always()
+        run: python -m scripts.generate_report
+
+      - name: Publish report to the job summary
+        if: always()
+        run: |
+          echo '```text' >> "$GITHUB_STEP_SUMMARY"
+          cat reports/ai-quality-report.txt >> "$GITHUB_STEP_SUMMARY"
+          echo '```' >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Upload artefacts
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: pr-quality-artifacts
+          path: |
+            reports/
+            test-results/
+          retention-days: 14
+
+  # ------------------------------------------------------------------ #
+  cross-browser:
+    name: Playwright (${{ matrix.browser }})
+    runs-on: ubuntu-latest
+    if: github.event_name == 'schedule' || inputs.full_evaluation
+    strategy:
+      fail-fast: false
+      matrix:
+        browser: [chromium, firefox, webkit]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+          cache: pip
+      - run: |
+          python -m pip install --upgrade pip
+          pip install -e ".[ai]"
+      - run: python -m playwright install --with-deps ${{ matrix.browser }}
+      - name: UI and end-to-end suites
+        run: pytest tests/ui tests/e2e --browser ${{ matrix.browser }} --tracing retain-on-failure --video retain-on-failure
+      - if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: playwright-${{ matrix.browser }}
+          path: |
+            reports/
+            test-results/
+          retention-days: 14
+
+  # ------------------------------------------------------------------ #
+  nightly-evaluation:
+    name: Nightly AI evaluation
+    runs-on: ubuntu-latest
+    if: github.event_name == 'schedule' || inputs.full_evaluation
+    env:
+      # Falls back to mock + builtin evaluators when no key is configured, so the
+      # nightly job still runs (and still gates) on a fork without secrets.
+      LLM_PROVIDER: ${{ secrets.OPENAI_API_KEY && 'openai' || 'mock' }}
+      EVALUATOR_BACKEND: ${{ secrets.OPENAI_API_KEY && 'deepeval' || 'builtin' }}
+      OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+      LANGFUSE_ENABLED: ${{ secrets.LANGFUSE_PUBLIC_KEY && 'true' || 'false' }}
+      LANGFUSE_PUBLIC_KEY: ${{ secrets.LANGFUSE_PUBLIC_KEY }}
+      LANGFUSE_SECRET_KEY: ${{ secrets.LANGFUSE_SECRET_KEY }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+          cache: pip
+      - run: |
+          python -m pip install --upgrade pip
+          pip install -e ".[ai,eval,obs]"
+      - run: python -m playwright install --with-deps chromium
+
+      - name: Full test suite
+        run: pytest --junitxml=reports/junit.xml
+
+      - name: Full evaluation
+        run: python -m scripts.run_evaluation
+
+      - name: Prompt A/B (v1 vs v2)
+        run: python -m scripts.run_evaluation --compare-prompts
+
+      - name: Promptfoo comparison
+        if: env.OPENAI_API_KEY != ''
+        run: npx --yes promptfoo@latest eval -c promptfooconfig.yaml --no-progress-bar || true
+
+      - name: AI quality gate
+        run: python -m scripts.quality_gate --from-file reports/evaluation_run.json
+
+      - name: Render report
+        if: always()
+        run: |
+          python -m scripts.generate_report
+          echo '```text' >> "$GITHUB_STEP_SUMMARY"
+          cat reports/ai-quality-report.txt >> "$GITHUB_STEP_SUMMARY"
+          echo '```' >> "$GITHUB_STEP_SUMMARY"
+
+      - if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: nightly-ai-quality
+          path: reports/
+          retention-days: 30

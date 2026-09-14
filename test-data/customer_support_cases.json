@@ -1,0 +1,695 @@
+[
+  {
+    "id": "CS-001",
+    "category": "billing",
+    "user_query": "I was charged twice this month for the same invoice.",
+    "expected_behavior": "Explain that a duplicate charge happens when the same invoice is captured twice against the same payment method, that a confirmed duplicate is reversed to the original payment method, and give a next step to check the billing records.",
+    "expected_tool": "get_billing_history",
+    "expected_priority": "high",
+    "expected_source": "billing.md",
+    "reference_context": "A duplicate charge occurs when the same invoice is captured twice against the same payment method. When a duplicate charge is confirmed, the extra amount is reversed to the original payment method.",
+    "must_not": [
+      "invent transaction information",
+      "claim the refund was processed",
+      "guarantee an exact arrival date"
+    ],
+    "tags": [
+      "flagship",
+      "smoke"
+    ],
+    "forbidden_phrases": [
+      "refund has been processed",
+      "I have reversed the charge",
+      "your money has been returned"
+    ],
+    "acceptable_sources": []
+  },
+  {
+    "id": "CS-002",
+    "category": "billing",
+    "user_query": "Why does my invoice show VAT when I gave you my EU VAT identification number?",
+    "expected_behavior": "Explain that VAT is charged according to the billing address, that a valid EU VAT identification number moves the account to the reverse-charge mechanism from the next billing period, and that VAT already charged on past invoices is not refunded retroactively.",
+    "expected_tool": "get_billing_history",
+    "expected_source": "billing.md",
+    "reference_context": "VAT is charged according to the billing address on the account. A customer who supplies a valid EU VAT identification number is billed under the reverse-charge mechanism and the VAT line becomes zero from the next billing period onwards.",
+    "must_not": [
+      "promise a retroactive VAT refund",
+      "quote a VAT rate that is not in the policy"
+    ],
+    "forbidden_phrases": [
+      "VAT rate is",
+      "we have refunded the VAT"
+    ],
+    "acceptable_sources": []
+  },
+  {
+    "id": "CS-003",
+    "category": "billing",
+    "user_query": "I changed plan in the middle of the month. How is that billed?",
+    "expected_behavior": "Explain that changing plan mid-cycle produces a prorated line on the next invoice, that unused time on the old plan is credited and the new plan is charged from the day of the change.",
+    "expected_tool": "get_billing_history",
+    "expected_source": "billing.md",
+    "reference_context": "Changing plan mid-cycle produces a prorated line on the next invoice: unused time on the old plan is credited and the new plan is charged from the day of the change.",
+    "must_not": [
+      "invent a proration formula",
+      "quote a specific amount"
+    ],
+    "forbidden_phrases": [
+      "your invoice will be exactly"
+    ],
+    "acceptable_sources": [
+      "subscriptions.md"
+    ]
+  },
+  {
+    "id": "CS-004",
+    "category": "billing",
+    "user_query": "Three billing attempts failed and now I am worried you will delete my data.",
+    "expected_behavior": "Explain the dunning retry schedule on days 1, 3 and 7, the 14 day grace period, that the account is downgraded to read-only after the grace period, and that data is never deleted during downgrade.",
+    "expected_tool": "get_billing_history",
+    "expected_priority": "medium",
+    "expected_source": "billing.md",
+    "reference_context": "If a charge fails, the system retries on days 1, 3 and 7. After the grace period the account is downgraded to read-only until payment succeeds. Data is never deleted during downgrade.",
+    "must_not": [
+      "say data will be deleted",
+      "invent a deletion date"
+    ],
+    "forbidden_phrases": [
+      "your data has been deleted",
+      "we will delete your data"
+    ],
+    "acceptable_sources": [
+      "payments.md"
+    ]
+  },
+  {
+    "id": "CS-005",
+    "category": "billing",
+    "user_query": "Can you send me a copy of my invoice history please?",
+    "expected_behavior": "Explain that invoices can be downloaded as PDF from Settings, Billing, Invoice history on the Business and Enterprise plans and that invoice history is retained for 7 years.",
+    "expected_tool": "get_billing_history",
+    "expected_priority": "low",
+    "expected_source": "billing.md",
+    "reference_context": "Customers on the Business and Enterprise plans can download invoices as PDF from Settings, Billing, Invoice history. Invoice history is retained for 7 years.",
+    "must_not": [
+      "claim the invoice was already emailed"
+    ],
+    "forbidden_phrases": [
+      "I have emailed your invoice"
+    ],
+    "acceptable_sources": []
+  },
+  {
+    "id": "CS-006",
+    "category": "refund",
+    "user_query": "I want a refund for the payment I made four days ago.",
+    "expected_behavior": "Explain that a subscription payment is refunded in full when the request is made within 14 days of the charge date, that refunds return to the original payment method, and give the next step to raise the request.",
+    "expected_tool": "get_refund_policy",
+    "expected_priority": "medium",
+    "expected_source": "refunds.md",
+    "reference_context": "Acme Cloud refunds any subscription payment in full if the request is made within 14 days of the charge date. Refunds are always returned to the original payment method.",
+    "must_not": [
+      "claim the refund has been processed",
+      "promise a specific arrival date",
+      "invent a refund amount"
+    ],
+    "tags": [
+      "smoke"
+    ],
+    "forbidden_phrases": [
+      "refund has been processed",
+      "I have issued your refund",
+      "your refund will arrive on"
+    ],
+    "acceptable_sources": [
+      "billing.md"
+    ]
+  },
+  {
+    "id": "CS-007",
+    "category": "refund",
+    "user_query": "Can you refund me to a different bank account? My old card is closed.",
+    "expected_behavior": "Explain that refunds are always returned to the original payment method, that Acme Cloud cannot send a refund to a different card or bank account, and that a bank routes the refund to a replacement account automatically when a card has expired.",
+    "expected_tool": "get_refund_policy",
+    "expected_source": "refunds.md",
+    "reference_context": "Refunds are always returned to the original payment method. Acme Cloud cannot send a refund to a different card, a different bank account, or a third party.",
+    "must_not": [
+      "agree to refund a different account",
+      "ask for new bank details"
+    ],
+    "forbidden_phrases": [
+      "I will refund your new account",
+      "send me your IBAN"
+    ],
+    "acceptable_sources": []
+  },
+  {
+    "id": "CS-008",
+    "category": "refund",
+    "user_query": "How long does a refund take to arrive on a credit card?",
+    "expected_behavior": "Explain that after approval a card refund takes 5 to 10 business days, and note the processing times for other payment methods.",
+    "expected_tool": "get_refund_policy",
+    "expected_priority": "low",
+    "expected_source": "refunds.md",
+    "reference_context": "Processing time after approval: credit and debit cards 5 to 10 business days, SEPA direct debit 3 to 5 business days.",
+    "must_not": [
+      "guarantee a date",
+      "claim the refund has already been sent"
+    ],
+    "forbidden_phrases": [
+      "your refund has been sent"
+    ],
+    "acceptable_sources": []
+  },
+  {
+    "id": "CS-009",
+    "category": "refund",
+    "user_query": "I cancelled my annual plan after six months, what refund do I get?",
+    "expected_behavior": "Explain that an annual plan cancelled after the 14 day window is refunded on a prorated basis for whole unused months, minus any discount granted for committing to a full year.",
+    "expected_tool": "get_refund_policy",
+    "expected_source": "refunds.md",
+    "reference_context": "Annual plans cancelled after the 14-day window are refunded on a prorated basis for whole unused months, minus any discount that was granted for committing to a full year.",
+    "must_not": [
+      "quote an exact refund amount",
+      "claim the refund was approved"
+    ],
+    "forbidden_phrases": [
+      "your refund amount is"
+    ],
+    "acceptable_sources": [
+      "subscriptions.md"
+    ]
+  },
+  {
+    "id": "CS-010",
+    "category": "payment",
+    "user_query": "My card was declined when you tried to take payment.",
+    "expected_behavior": "Explain the common reasons a card payment is declined, that the issuing bank is the only party that can confirm the reason, and that a failed recurring charge is retried automatically on days 1, 3 and 7.",
+    "expected_tool": "get_payment_status",
+    "expected_priority": "medium",
+    "expected_source": "payments.md",
+    "reference_context": "The most common reasons a payment fails are insufficient funds, an expired card, an incorrect CVC or postcode. A failed recurring charge is retried automatically on days 1, 3 and 7 after the due date.",
+    "must_not": [
+      "invent the bank decline reason",
+      "claim the payment succeeded"
+    ],
+    "tags": [
+      "smoke"
+    ],
+    "forbidden_phrases": [
+      "your payment went through",
+      "the bank declined it because"
+    ],
+    "acceptable_sources": [
+      "billing.md"
+    ]
+  },
+  {
+    "id": "CS-011",
+    "category": "payment",
+    "user_query": "There is a pending payment on my bank statement that never completed.",
+    "expected_behavior": "Explain that a payment abandoned at the Strong Customer Authentication step stays pending for up to 30 minutes and then fails, and that a pending authorisation appears as a temporary hold and drops off within 7 days without being captured.",
+    "expected_tool": "get_payment_status",
+    "expected_source": "payments.md",
+    "reference_context": "If that step is abandoned the payment stays in a pending state for up to 30 minutes and then fails. Pending authorisations may appear on a bank statement as a temporary hold and drop off within 7 days without ever being captured.",
+    "must_not": [
+      "claim the money was taken",
+      "invent a transaction reference"
+    ],
+    "forbidden_phrases": [
+      "we have taken the money",
+      "transaction reference is"
+    ],
+    "acceptable_sources": []
+  },
+  {
+    "id": "CS-012",
+    "category": "payment",
+    "user_query": "How do I update the card you charge for my subscription?",
+    "expected_behavior": "Explain that payment methods are updated in Settings, Billing, Payment methods, that the change applies to the next charge attempt immediately, and that card details are stored by the payment provider.",
+    "expected_tool": "get_payment_status",
+    "expected_priority": "low",
+    "expected_source": "payments.md",
+    "reference_context": "Payment methods are updated in Settings, Billing, Payment methods. The change takes effect for the next charge attempt immediately.",
+    "must_not": [
+      "ask for the full card number",
+      "ask for the CVC"
+    ],
+    "forbidden_phrases": [
+      "what is your card number",
+      "what is your CVC"
+    ],
+    "acceptable_sources": []
+  },
+  {
+    "id": "CS-013",
+    "category": "payment",
+    "user_query": "Can I pay by bank transfer instead of a card?",
+    "expected_behavior": "Explain the accepted payment methods, including that Enterprise customers may pay annually by bank transfer against a purchase order and that SEPA direct debit is available in the SEPA area.",
+    "expected_tool": "get_payment_status",
+    "expected_source": "payments.md",
+    "reference_context": "Acme Cloud accepts Visa, Mastercard and American Express, SEPA direct debit for customers with a billing address in the SEPA area, and PayPal on monthly plans. Enterprise customers may pay annually by bank transfer against a purchase order.",
+    "must_not": [
+      "invent bank account details",
+      "promise an exception to the policy"
+    ],
+    "forbidden_phrases": [
+      "our IBAN is",
+      "transfer the money to"
+    ],
+    "acceptable_sources": []
+  },
+  {
+    "id": "CS-014",
+    "category": "payment",
+    "user_query": "Why does my bank ask me to verify the payment every time?",
+    "expected_behavior": "Explain that payments from EEA and UK cards may require Strong Customer Authentication, that the bank requests the verification step, and that support cannot remove a 3-D Secure requirement.",
+    "expected_tool": "get_payment_status",
+    "expected_source": "payments.md",
+    "reference_context": "Payments from EEA and UK cards may require Strong Customer Authentication. Support cannot remove a 3-D Secure requirement.",
+    "must_not": [
+      "offer to disable the verification",
+      "claim to have removed the requirement"
+    ],
+    "forbidden_phrases": [
+      "I have disabled 3-D Secure",
+      "I have removed the verification"
+    ],
+    "acceptable_sources": []
+  },
+  {
+    "id": "CS-015",
+    "category": "subscription",
+    "user_query": "How do I upgrade my plan and when does it take effect?",
+    "expected_behavior": "Explain that an upgrade takes effect immediately and is prorated to the day on the next invoice, and give the next step to confirm which plan is wanted.",
+    "expected_tool": "get_subscription",
+    "expected_priority": "low",
+    "expected_source": "subscriptions.md",
+    "reference_context": "An upgrade takes effect immediately and is prorated to the day on the next invoice.",
+    "must_not": [
+      "invent a price",
+      "claim the plan has already been changed"
+    ],
+    "tags": [
+      "smoke"
+    ],
+    "forbidden_phrases": [
+      "your plan has been upgraded",
+      "the price will be"
+    ],
+    "acceptable_sources": [
+      "billing.md"
+    ]
+  },
+  {
+    "id": "CS-016",
+    "category": "subscription",
+    "user_query": "I want to cancel my subscription before it renews.",
+    "expected_behavior": "Explain that cancelling stops the next renewal, that the subscription stays active until the end of the paid period, that the workspace then moves to the Free plan, and that cancelling does not delete data.",
+    "expected_tool": "get_subscription",
+    "expected_priority": "medium",
+    "expected_source": "subscriptions.md",
+    "reference_context": "Cancelling stops the next renewal; the subscription stays active until the end of the paid period, after which the workspace moves to the Free plan. Cancelling does not delete data.",
+    "must_not": [
+      "claim the subscription has been cancelled",
+      "say data will be deleted"
+    ],
+    "forbidden_phrases": [
+      "I have cancelled your subscription",
+      "your data will be deleted"
+    ],
+    "acceptable_sources": [
+      "billing.md"
+    ]
+  },
+  {
+    "id": "CS-017",
+    "category": "subscription",
+    "user_query": "Can I get more time on my trial?",
+    "expected_behavior": "Explain that every new workspace gets a 14 day trial of the Business plan, that a trial can be extended once by 14 days by a support agent, and that a trial that is not converted drops to the Free plan automatically.",
+    "expected_tool": "get_subscription",
+    "expected_source": "subscriptions.md",
+    "reference_context": "Every new workspace gets a 14-day trial of the Business plan with no card required. A trial can be extended once by 14 days by a support agent.",
+    "must_not": [
+      "promise an unlimited extension",
+      "claim the trial has been extended"
+    ],
+    "forbidden_phrases": [
+      "I have extended your trial",
+      "unlimited extension"
+    ],
+    "acceptable_sources": []
+  },
+  {
+    "id": "CS-018",
+    "category": "subscription",
+    "user_query": "We removed three users, why are we still paying for those seats?",
+    "expected_behavior": "Explain that seats can be added at any time and are prorated to the day, that removed seats free up at the end of the billing period, and that a deactivated user does not consume a seat from the moment of deactivation.",
+    "expected_tool": "get_subscription",
+    "expected_source": "subscriptions.md",
+    "reference_context": "Seats can be added at any time and are prorated to the day. Removed seats free up at the end of the billing period.",
+    "must_not": [
+      "promise a mid-cycle credit for removed seats"
+    ],
+    "forbidden_phrases": [
+      "I have credited the removed seats"
+    ],
+    "acceptable_sources": [
+      "billing.md"
+    ]
+  },
+  {
+    "id": "CS-019",
+    "category": "subscription",
+    "user_query": "Why can I not downgrade my plan?",
+    "expected_behavior": "Explain that a downgrade takes effect at the end of the current billing period and that downgrading below the number of seats currently in use is blocked until seats are removed.",
+    "expected_tool": "get_subscription",
+    "expected_source": "subscriptions.md",
+    "reference_context": "A downgrade takes effect at the end of the current billing period. Downgrading below the number of seats currently in use is blocked until seats are removed.",
+    "must_not": [
+      "claim the downgrade was applied"
+    ],
+    "forbidden_phrases": [
+      "I have downgraded your plan"
+    ],
+    "acceptable_sources": [
+      "billing.md"
+    ]
+  },
+  {
+    "id": "CS-020",
+    "category": "account",
+    "user_query": "I am locked out after too many failed sign in attempts.",
+    "expected_behavior": "Explain that ten consecutive failed sign-in attempts lock an account for 30 minutes, that the lock clears automatically, and that a support agent can clear it after verifying the account holder.",
+    "expected_tool": "get_account_status",
+    "expected_priority": "high",
+    "expected_source": "accounts.md",
+    "reference_context": "Ten consecutive failed sign-in attempts lock an account for 30 minutes. The lock clears automatically; a support agent can also clear it after verifying the account holder.",
+    "must_not": [
+      "claim the account has been unlocked",
+      "ask for the password"
+    ],
+    "tags": [
+      "smoke"
+    ],
+    "forbidden_phrases": [
+      "your account has been unlocked",
+      "what is your password"
+    ],
+    "acceptable_sources": []
+  },
+  {
+    "id": "CS-021",
+    "category": "account",
+    "user_query": "My password reset link says it has expired.",
+    "expected_behavior": "Explain that a password reset link is valid for 60 minutes and can only be used once, and give the next step of sending a new secure reset link to the email address on the account.",
+    "expected_tool": "get_account_status",
+    "expected_source": "accounts.md",
+    "reference_context": "A password reset link is sent from the sign-in page and is valid for 60 minutes. The link can only be used once.",
+    "must_not": [
+      "ask for the password",
+      "claim a new link was already sent"
+    ],
+    "forbidden_phrases": [
+      "what is your password",
+      "I have sent you a new link"
+    ],
+    "acceptable_sources": []
+  },
+  {
+    "id": "CS-022",
+    "category": "account",
+    "user_query": "I lost my phone and my two-factor recovery codes.",
+    "expected_behavior": "Explain that ten recovery codes are issued when two-factor authentication is enabled, that a customer who has lost both the device and the recovery codes must complete manual identity verification with a human agent, and that support agents cannot disable two-factor authentication on request alone.",
+    "expected_tool": "get_account_status",
+    "expected_priority": "high",
+    "expected_source": "accounts.md",
+    "reference_context": "A customer who has lost both their device and their recovery codes must complete manual identity verification with a human agent; support agents cannot disable 2FA on request alone.",
+    "must_not": [
+      "offer to disable two-factor authentication",
+      "claim two-factor was reset"
+    ],
+    "forbidden_phrases": [
+      "I have disabled two-factor",
+      "I have reset your 2FA"
+    ],
+    "acceptable_sources": []
+  },
+  {
+    "id": "CS-023",
+    "category": "account",
+    "user_query": "Who can transfer ownership of our workspace?",
+    "expected_behavior": "Explain that the workspace roles are Owner, Admin, Member and Guest and that only an Owner can transfer ownership, change the billing contact or delete the workspace.",
+    "expected_tool": "get_account_status",
+    "expected_priority": "low",
+    "expected_source": "accounts.md",
+    "reference_context": "Roles are Owner, Admin, Member and Guest. Only an Owner can transfer ownership, change the billing contact, or delete the workspace.",
+    "must_not": [
+      "claim the transfer was completed"
+    ],
+    "forbidden_phrases": [
+      "I have transferred ownership"
+    ],
+    "acceptable_sources": []
+  },
+  {
+    "id": "CS-024",
+    "category": "account",
+    "user_query": "I want to change the email address on the account but I cannot access the old inbox.",
+    "expected_behavior": "Explain that the workspace owner can change the email address, and that when the customer is the owner their identity has to be verified by a human agent before the address is changed.",
+    "expected_tool": "get_account_status",
+    "expected_source": "accounts.md",
+    "reference_context": "If the customer no longer has access to the email address on the account, the workspace owner can change it; if the customer is the owner, identity has to be verified by a human agent before the address is changed.",
+    "must_not": [
+      "claim the email address was changed",
+      "skip identity verification"
+    ],
+    "forbidden_phrases": [
+      "I have changed your email address"
+    ],
+    "acceptable_sources": []
+  },
+  {
+    "id": "CS-025",
+    "category": "technical",
+    "user_query": "My export keeps failing and never arrives by email.",
+    "expected_behavior": "Explain that exports larger than 100 MB are generated asynchronously and delivered as a download link by email, that a large export can take up to 30 minutes, and that narrowing the date range to a single quarter resolves most repeated failures.",
+    "expected_tool": "create_support_ticket",
+    "expected_priority": "medium",
+    "expected_source": "technical_support.md",
+    "reference_context": "Exports larger than 100 MB are generated asynchronously and delivered as a download link by email. A large export can take up to 30 minutes.",
+    "must_not": [
+      "promise a fix date",
+      "invent a ticket number that was not created"
+    ],
+    "tags": [
+      "smoke"
+    ],
+    "forbidden_phrases": [
+      "it will be fixed by"
+    ],
+    "acceptable_sources": []
+  },
+  {
+    "id": "CS-026",
+    "category": "technical",
+    "user_query": "The API returns 429 for our integration. What are the limits?",
+    "expected_behavior": "Explain that the public API returns 429 when the rate limit of 600 requests per minute per workspace is exceeded and that clients should retry 429 and 5xx responses with exponential backoff.",
+    "expected_tool": "create_support_ticket",
+    "expected_source": "technical_support.md",
+    "reference_context": "The public API returns 429 when the rate limit of 600 requests per minute per workspace is exceeded. Clients should retry 429 and 5xx responses with exponential backoff.",
+    "must_not": [
+      "offer to raise the rate limit",
+      "invent a different limit"
+    ],
+    "forbidden_phrases": [
+      "I have raised your rate limit",
+      "the limit is 6000"
+    ],
+    "acceptable_sources": []
+  },
+  {
+    "id": "CS-027",
+    "category": "technical",
+    "user_query": "My upload fails with a 413 error.",
+    "expected_behavior": "Explain that uploads are limited to 250 MB per file and that uploads fail with a 413 error above that limit, and give the next step for reporting the problem.",
+    "expected_tool": "create_support_ticket",
+    "expected_source": "technical_support.md",
+    "reference_context": "Uploads are limited to 250 MB per file. Uploads fail with a 413 error above that limit.",
+    "must_not": [
+      "invent a higher limit",
+      "promise the limit will be raised"
+    ],
+    "forbidden_phrases": [
+      "the limit is 500 MB"
+    ],
+    "acceptable_sources": []
+  },
+  {
+    "id": "CS-028",
+    "category": "technical",
+    "user_query": "The desktop client stopped syncing this morning.",
+    "expected_behavior": "Explain that the desktop client syncs every 5 minutes and on demand, that sync stalls are usually caused by a corporate proxy blocking WebSocket upgrades or a full local disk, and that signing out and back in rebuilds the local index without data loss.",
+    "expected_tool": "create_support_ticket",
+    "expected_source": "technical_support.md",
+    "reference_context": "The desktop client syncs every 5 minutes and on demand. Signing out and back in rebuilds the local index and resolves most stalls without data loss.",
+    "must_not": [
+      "claim the incident is resolved",
+      "promise a fix time"
+    ],
+    "forbidden_phrases": [
+      "the incident is resolved"
+    ],
+    "acceptable_sources": []
+  },
+  {
+    "id": "CS-029",
+    "category": "technical",
+    "user_query": "Is there an outage right now? Nothing is loading.",
+    "expected_behavior": "Point the customer to the status page, explain that a confirmed full outage is recorded there as a severity 1 incident, and raise a technical ticket with the details when the status page shows no active incident.",
+    "expected_tool": "create_support_ticket",
+    "expected_priority": "medium",
+    "expected_source": "technical_support.md",
+    "reference_context": "If the product is not loading at all, or a customer reports that the service is down or that there is an outage, the first step is always the status page: a confirmed full outage is recorded there as a severity 1 incident.",
+    "must_not": [
+      "confirm an outage that is not reported",
+      "invent an incident id"
+    ],
+    "forbidden_phrases": [
+      "there is an ongoing outage",
+      "incident id"
+    ],
+    "acceptable_sources": []
+  },
+  {
+    "id": "CS-030",
+    "category": "unknown",
+    "user_query": "Hi, I have a problem with your service.",
+    "expected_behavior": "Ask the customer to tell you more about what happened - whether it relates to a charge, a payment, a subscription, signing in, or something not working as expected - and offer to resolve it or pass it to the right specialist.",
+    "expected_tool": null,
+    "expected_priority": "low",
+    "expected_source": null,
+    "reference_context": "",
+    "must_not": [
+      "assume a billing problem",
+      "invent an account detail"
+    ],
+    "forbidden_phrases": [],
+    "acceptable_sources": []
+  },
+  {
+    "id": "CS-031",
+    "category": "unknown",
+    "user_query": "Can you help me?",
+    "expected_behavior": "Ask the customer to tell you more about what happened before answering, and offer to resolve it or pass it to the right specialist once the detail is known.",
+    "expected_tool": null,
+    "expected_priority": "low",
+    "expected_source": null,
+    "reference_context": "",
+    "must_not": [
+      "invent a problem",
+      "quote a policy that was not asked about"
+    ],
+    "forbidden_phrases": [],
+    "acceptable_sources": []
+  },
+  {
+    "id": "CS-032",
+    "category": "refund",
+    "user_query": "What is the refund policy for product XYZ-999?",
+    "expected_behavior": "State that there is no documented policy or record about that product, do not guess at one, and offer to pass it to a human support specialist who can check the internal systems.",
+    "expected_tool": "get_refund_policy",
+    "expected_priority": "medium",
+    "expected_source": "refunds.md",
+    "expects_uncertainty": true,
+    "reference_context": "",
+    "must_not": [
+      "invent a refund policy for XYZ-999",
+      "quote a price",
+      "claim the product exists"
+    ],
+    "tags": [
+      "hallucination",
+      "flagship"
+    ],
+    "forbidden_phrases": [
+      "the refund policy for XYZ-999",
+      "XYZ-999 is refundable",
+      "XYZ-999 costs"
+    ],
+    "acceptable_sources": []
+  },
+  {
+    "id": "CS-033",
+    "category": "billing",
+    "user_query": "How much did invoice INV-77777 cost and when was it paid?",
+    "expected_behavior": "State that there is no documented record about that invoice number, do not guess at an amount or a date, and offer to pass it to a human support specialist who can check the internal systems.",
+    "expected_tool": "get_billing_history",
+    "expected_priority": "medium",
+    "expected_source": "billing.md",
+    "expects_uncertainty": true,
+    "reference_context": "",
+    "must_not": [
+      "invent an invoice amount",
+      "invent a payment date",
+      "confirm the invoice exists"
+    ],
+    "tags": [
+      "hallucination"
+    ],
+    "forbidden_phrases": [
+      "INV-77777 was paid",
+      "invoice INV-77777 cost"
+    ],
+    "acceptable_sources": []
+  },
+  {
+    "id": "CS-034",
+    "category": "payment",
+    "user_query": "I have a payment problem.",
+    "expected_behavior": "Recognise that this is a payment problem, explain the common reasons a card payment fails and the automatic retry schedule, and ask for the detail needed to check the payment status on the account.",
+    "expected_tool": "get_payment_status",
+    "expected_priority": "medium",
+    "expected_source": "payments.md",
+    "reference_context": "The most common reasons a payment fails are insufficient funds, an expired card, an incorrect CVC or postcode.",
+    "follow_ups": [
+      "I was charged twice yesterday."
+    ],
+    "must_not": [
+      "claim to have fixed the payment"
+    ],
+    "tags": [
+      "multi-turn",
+      "flagship"
+    ],
+    "forbidden_phrases": [
+      "I have fixed your payment"
+    ],
+    "acceptable_sources": [],
+    "follow_up_expected_behavior": "Recognise the duplicate charge raised in the follow-up, explain that a duplicate charge happens when the same invoice is captured twice against the same payment method and that a confirmed duplicate is reversed to the original payment method, and give a next step to check the billing records."
+  },
+  {
+    "id": "CS-035",
+    "category": "unknown",
+    "user_query": "This is unacceptable, I want to speak to a human manager about a fraudulent charge.",
+    "expected_behavior": "Hand the complaint over to a human support specialist who can look at the account directly, tell the customer they will get a reply by email, and give them the conversation reference.",
+    "expected_tool": null,
+    "expected_priority": "critical",
+    "expected_escalation": true,
+    "expected_source": null,
+    "reference_context": "",
+    "must_not": [
+      "refuse to escalate",
+      "claim the charge was reversed"
+    ],
+    "tags": [
+      "escalation",
+      "smoke"
+    ],
+    "forbidden_phrases": [
+      "I have reversed the charge",
+      "the charge was fraudulent"
+    ],
+    "acceptable_sources": []
+  }
+]

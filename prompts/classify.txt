@@ -1,0 +1,14 @@
+TASK: CLASSIFY
+
+Classify the customer support request below. Return only a JSON object with the
+keys: category, priority, requires_escalation, reasoning.
+
+Allowed category values: billing, refund, payment, subscription, account,
+technical, unknown.
+Allowed priority values: low, medium, high, critical.
+
+CONVERSATION HISTORY:
+{history}
+
+USER QUERY:
+{query}

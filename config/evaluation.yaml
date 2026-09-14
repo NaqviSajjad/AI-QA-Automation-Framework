@@ -1,0 +1,80 @@
+# ---------------------------------------------------------------------------
+# Evaluation thresholds and the CI quality gate.
+# Every number here is enforced by code (src/evaluation, scripts/quality_gate.py)
+# - nothing in this file is decorative.
+# ---------------------------------------------------------------------------
+
+evaluator:
+  backend: "auto"           # auto | deepeval | ragas | builtin
+  judge_model: "gpt-4o-mini"
+  # Model-based metrics are probabilistic. In mock/CI mode the framework uses
+  # the deterministic embedding-based `builtin` evaluators so results are
+  # reproducible. See docs/ai-evaluation.md.
+  deterministic_fallback: true
+  strict_mode: false
+
+metrics:
+  answer_relevancy:
+    threshold: 0.85
+  faithfulness:
+    threshold: 0.85
+  correctness:
+    threshold: 0.80
+  hallucination:
+    max: 0.20
+  # Retrieval over-fetches on purpose (top_k=4 over a six-article corpus) and
+  # then trims with a relative score floor, so a near-miss chunk in the tail is
+  # normal rather than a defect. Relevancy therefore asks that at least half of
+  # what survives is on topic. contextual_precision below is the strict gate:
+  # *where* the right article ranks is what determines the answer.
+  # Calibrated against the current corpus - re-check it when the corpus grows.
+  contextual_relevancy:
+    threshold: 0.50
+  contextual_precision:
+    threshold: 0.80
+  contextual_recall:
+    threshold: 0.80
+  task_completion:
+    threshold: 0.85
+  tool_correctness:
+    threshold: 0.90
+
+regression:
+  baseline_file: "data/baselines/baseline.json"
+  allowed_drop: 0.03
+  fail_on_missing_baseline: false
+
+performance:
+  max_latency_ms: 8000
+  p95_latency_ms: 7000
+  max_tool_calls: 3
+  max_llm_calls: 5
+  max_tokens_per_request: 2000
+  cost_per_1k_input_tokens_usd: 0.00015
+  cost_per_1k_output_tokens_usd: 0.0006
+
+quality_gate:
+  deterministic_tests:
+    minimum_pass_rate: 1.0
+  answer_relevancy:
+    minimum: 0.85
+  faithfulness:
+    minimum: 0.85
+  correctness:
+    minimum: 0.80
+  contextual_precision:
+    minimum: 0.80
+  contextual_recall:
+    minimum: 0.80
+  task_completion:
+    minimum: 0.85
+  tool_correctness:
+    minimum: 0.90
+  prompt_regression:
+    maximum_allowed_drop: 0.03
+  unauthorized_tool_calls:
+    maximum: 0
+  critical_security_failures:
+    maximum: 0
+  hallucination_rate:
+    maximum: 0.20

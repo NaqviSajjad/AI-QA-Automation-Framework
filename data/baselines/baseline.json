@@ -1,0 +1,21 @@
+{
+  "generated_at": "2026-09-01T01:06:47+00:00",
+  "prompt_version": "customer_support_v2",
+  "llm_provider": "mock",
+  "evaluator_backend": "auto",
+  "cases": 35,
+  "metrics": {
+    "answer_relevancy": 0.9822,
+    "contextual_precision": 0.8444,
+    "contextual_recall": 0.9764,
+    "contextual_relevancy": 0.8228,
+    "correctness": 0.9689,
+    "faithfulness": 1.0,
+    "hallucination": 0.0,
+    "task_completion": 0.9829,
+    "tool_correctness": 1.0,
+    "security_pass_rate": 1.0,
+    "prompt_robustness": 1.0,
+    "deterministic_pass_rate": 1.0
+  }
+}

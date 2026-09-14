@@ -1,0 +1,36 @@
+# Secrets
+.env
+*.pem
+*.key
+secrets/
+
+# Python
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+*.egg-info/
+.mypy_cache/
+.ruff_cache/
+.pytest_cache/
+
+# Test artefacts
+reports/*
+!reports/.gitkeep
+test-results/
+playwright-report/
+videos/
+traces/
+screenshots/
+.deepeval*
+.promptfoo/
+promptfoo-output.json
+
+# Vector store cache
+.vectorstore/
+
+# OS / editors
+.DS_Store
+.idea/
+.vscode/
+node_modules/

@@ -1,0 +1,79 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "ai-qa-automation-framework"
+version = "1.0.0"
+description = "Playwright-based AI Quality Engineering framework for LLM, RAG and agentic applications"
+readme = "README.md"
+requires-python = ">=3.11"
+license = { text = "MIT" }
+authors = [{ name = "Sajjad Naqvi" }]
+
+dependencies = [
+    # --- Core test stack -------------------------------------------------
+    "pytest>=8.0",
+    "pytest-playwright>=0.5",
+    "playwright>=1.44",
+    "pytest-xdist>=3.5",
+    "pytest-html>=4.1",
+    "pytest-rerunfailures>=14.0",
+    "pytest-timeout>=2.3",
+    # --- Data / contracts ------------------------------------------------
+    "pydantic>=2.7",
+    "pydantic-settings>=2.3",
+    "jsonschema>=4.22",
+    "pyyaml>=6.0",
+    "python-dotenv>=1.0",
+    # --- HTTP / app ------------------------------------------------------
+    "httpx>=0.27",
+    "requests>=2.32",
+    "fastapi>=0.111",
+    "uvicorn>=0.30",
+    "numpy>=1.26",
+]
+
+[project.optional-dependencies]
+# Real LLM + LangChain/LangGraph stack. Not needed for LLM_PROVIDER=mock.
+ai = [
+    "openai>=1.30",
+    "langchain>=0.2",
+    "langchain-core>=0.2",
+    "langchain-community>=0.2",
+    "langchain-openai>=0.1",
+    "langgraph>=0.1",
+    "faiss-cpu>=1.8",
+]
+# Model-based evaluation. Optional: the framework degrades to deterministic
+# + embedding-based evaluators when these are absent.
+eval = [
+    "deepeval>=1.0",
+    "ragas>=0.1.9",
+    "datasets>=2.19",
+]
+obs = ["langfuse>=2.36"]
+dev = ["ruff>=0.4", "mypy>=1.10", "types-PyYAML", "types-requests"]
+
+[tool.setuptools]
+packages = ["src"]
+
+[tool.ruff]
+line-length = 100
+target-version = "py311"
+exclude = ["reports", ".venv"]
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "B", "UP", "SIM"]
+ignore = ["E501", "B008", "UP042"]  # UP042: StrEnum needs 3.11+ only semantics we do not rely on
+
+[tool.mypy]
+python_version = "3.11"
+ignore_missing_imports = true
+# Third-party stub availability varies between environments (and the optional
+# extras are not installed in every one). Missing stubs should not be the thing
+# that fails a type check on someone's laptop.
+disable_error_code = ["import-untyped"]
+warn_unused_ignores = false
+disallow_untyped_defs = false
+exclude = "(reports|\\.venv)"
