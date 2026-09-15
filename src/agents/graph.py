@@ -33,7 +33,7 @@ try:  # pragma: no cover - optional
 
     LANGGRAPH_AVAILABLE = True
 except ImportError:  # pragma: no cover
-    StateGraph = None  # type: ignore[assignment]
+    StateGraph = None  # type: ignore[assignment,misc]
     START = "__start__"  # type: ignore[assignment]
     END = "__end__"  # type: ignore[assignment]
     LANGGRAPH_AVAILABLE = False
@@ -137,9 +137,11 @@ class SupportAgent:
         state = AgentState(
             user_query=query,
             conversation_history=history or [],
-            **({"conversation_id": conversation_id} if conversation_id else {}),
-            **({"account_id": account_id} if account_id else {}),
         )
+        if conversation_id:
+            state.conversation_id = conversation_id
+        if account_id:
+            state.account_id = account_id
         tracer = get_tracer()
         with tracer.trace(
             name="customer_support_agent",

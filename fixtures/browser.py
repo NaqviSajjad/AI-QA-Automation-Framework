@@ -15,7 +15,7 @@ from pathlib import Path
 from typing import Any
 
 import pytest
-from playwright.sync_api import Browser, BrowserContext, Page
+from playwright.sync_api import Browser, BrowserContext, Page, ViewportSize
 
 from pages.chatbot_page import ChatbotPage
 from pages.login_page import LoginPage
@@ -27,7 +27,7 @@ def browser_context_args(browser_context_args: dict[str, Any], app_server: str) 
     return {
         **browser_context_args,
         "base_url": app_server,
-        "viewport": settings.playwright.viewport,
+        "viewport": ViewportSize(**settings.playwright.viewport),  # type: ignore[typeddict-item]
         "ignore_https_errors": True,
         "locale": "en-GB",
     }
@@ -46,7 +46,9 @@ def authenticated_state(browser: Browser, app_server: str, storage_state_path: P
     fifty times and adding a second of latency to each case. `tests/ui/test_login`
     owns that behaviour; everything else starts already signed in.
     """
-    context = browser.new_context(base_url=app_server, viewport=settings.playwright.viewport)
+    context = browser.new_context(
+        base_url=app_server, viewport=ViewportSize(**settings.playwright.viewport)  # type: ignore[typeddict-item]
+    )
     page = context.new_page()
     login = LoginPage(page, base_url=app_server)
     login.open()

@@ -11,6 +11,8 @@ break the suite.
 
 from __future__ import annotations
 
+from typing import Literal
+
 from playwright.sync_api import Locator, Page
 
 from src.utils.config import settings
@@ -48,7 +50,12 @@ class BasePage:
     def text_of(self, name: str) -> str:
         return (self.testid(name).inner_text() or "").strip()
 
-    def wait_for(self, name: str, state: str = "visible", timeout: int | None = None) -> Locator:
+    def wait_for(
+        self,
+        name: str,
+        state: Literal["attached", "detached", "hidden", "visible"] = "visible",
+        timeout: int | None = None,
+    ) -> Locator:
         locator = self.testid(name)
         locator.wait_for(state=state, timeout=timeout or settings.playwright.default_timeout_ms)
         return locator

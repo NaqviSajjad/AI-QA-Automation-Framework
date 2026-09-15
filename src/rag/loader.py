@@ -21,7 +21,7 @@ try:  # pragma: no cover - exercised only when the optional extra is installed
 
     LANGCHAIN_AVAILABLE = True
 except ImportError:  # pragma: no cover
-    _LCDocument = None  # type: ignore[assignment]
+    _LCDocument = None  # type: ignore[assignment,misc]
     LANGCHAIN_AVAILABLE = False
 
 
